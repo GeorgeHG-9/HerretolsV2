@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "684268195349",
+    "project_id": "herretols-84b30",
+    "storage_bucket": "herretols-84b30.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:684268195349:android:1940e1d41fd2783810881c",
+        "android_client_info": {
+          "package_name": "com.example.herretols"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA0XNXM-zQfFa3WeQoJLaK2HiD_ok5-Wao"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
