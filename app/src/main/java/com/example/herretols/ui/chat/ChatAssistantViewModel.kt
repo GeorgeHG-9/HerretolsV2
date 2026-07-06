@@ -6,6 +6,7 @@ import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.content
 import com.example.herretols.data.model.ChatMessage
 import com.example.herretols.data.model.Product
+import com.example.herretols.ui.chat.Secrets.GEMINI_API_KEY
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -22,7 +23,7 @@ class ChatAssistantViewModel : ViewModel() {
     val isResponding: StateFlow<Boolean> = _isResponding
 
     // LLAVE DE GOOGLE AI STUDIO
-    private val apiKey = "AQ.Ab8RN6LW7-1XB9HI5ytKMPfu5C12fVLxBvcboHr0W7YRUuhCsA"
+    private val apiKey = GEMINI_API_KEY
 
     fun sendMessage(userText: String, currentProducts: List<Product>) {
         if (userText.isBlank() || _isResponding.value) return
