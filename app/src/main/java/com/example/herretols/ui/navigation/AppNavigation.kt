@@ -33,6 +33,8 @@ import com.example.herretols.ui.catalog.CatalogViewModel
 import com.example.herretols.ui.client.CustomerCatalogScreen
 import com.example.herretols.ui.catalog.OrdersHistoryViewModel
 import com.example.herretols.ui.catalog.CustomerOrdersScreen
+import com.example.herretols.ui.chat.ChatAssistantScreen
+import com.example.herretols.ui.chat.ChatAssistantViewModel
 import com.example.herretols.ui.scanner.BarcodeScannerScreen
 
 // 1. Definición de las rutas del sistema
@@ -46,6 +48,7 @@ sealed class Screen(val route: String) {
     object ProductForm : Screen("product_form")
     object CustomerOrders : Screen("customer_orders")
     object Scanner : Screen("scanner")
+    object ChatAssistant : Screen("chat_assistant")
 }
 
 @Composable
@@ -58,6 +61,7 @@ fun AppNavigation() {
     val adminViewModel: AdminViewModel = viewModel() // ViewModel del Admin global para la navegación
     val catalogViewModel: CatalogViewModel = viewModel()
     val historyViewModel: OrdersHistoryViewModel = viewModel()
+    val chatViewModel: ChatAssistantViewModel = viewModel()
 
     // Estado temporal para pasar el producto a editar entre pantallas sin romper la arquitectura
     var selectedProductToEdit by remember { mutableStateOf<Product?>(null) }
@@ -111,6 +115,7 @@ fun AppNavigation() {
                 // ◄ NUEVO: Callback para navegar al historial desde el catálogo
                 onNavigateToHistory = { navController.navigate(Screen.CustomerOrders.route) },
                 onNavigateToScanner = { navController.navigate(Screen.Scanner.route) },
+                onNavigateToChat = { navController.navigate(Screen.ChatAssistant.route) },
                 onLogout = {
                     navController.navigate(Screen.Login.route) {
                         popUpTo(Screen.CustomerCatalog.route) { inclusive = true }
@@ -119,7 +124,7 @@ fun AppNavigation() {
             )
         }
 
-        // ◄ NUEVA RUTA: Pantalla de Historial del Cliente
+        // Pantalla de Historial del Cliente
         composable(Screen.CustomerOrders.route) {
             CustomerOrdersScreen(
                 historyViewModel = historyViewModel,
@@ -170,6 +175,14 @@ fun AppNavigation() {
             BarcodeScannerScreen(
                 catalogViewModel = catalogViewModel,
                 cartViewModel = cartViewModel,
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.ChatAssistant.route) {
+            ChatAssistantScreen(
+                chatViewModel = chatViewModel,
+                catalogViewModel = catalogViewModel,
                 onNavigateBack = { navController.popBackStack() }
             )
         }

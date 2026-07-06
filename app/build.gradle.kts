@@ -87,4 +87,7 @@ dependencies {
 
     // Google ML Kit (Escáner de códigos de barras local y optimizado)
     implementation("com.google.mlkit:barcode-scanning:17.2.0")
+
+    // --- SDK OFICIAL DE GOOGLE GEMINI PARA ANDROID ---
+    implementation("com.google.ai.client.generativeai:generativeai:0.7.0")
 }

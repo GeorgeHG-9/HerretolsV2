@@ -40,10 +40,13 @@ import androidx.compose.ui.platform.LocalContext
 import com.example.herretols.ui.catalog.CartViewModel
 import com.example.herretols.ui.catalog.ProductCard
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.automirrored.filled.ListAlt
+import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.ListAlt
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.foundation.lazy.items as lazyRowItems
 
@@ -56,6 +59,7 @@ fun CustomerCatalogScreen(
     onNavigateToCart: () -> Unit,  // ◄ Callback de navegación
     onNavigateToHistory: () -> Unit, // ◄ Añadido a los parámetros
     onNavigateToScanner: () -> Unit,
+    onNavigateToChat: () -> Unit,
     onLogout: () -> Unit
 ) {
     val products by catalogViewModel.filteredProducts.collectAsState()
@@ -85,6 +89,16 @@ fun CustomerCatalogScreen(
                     }
                 }
             )
+        },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = onNavigateToChat
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Chat,
+                    contentDescription = "Chat IA"
+                )
+            }
         }
     ) { innerPadding ->
         Column(
