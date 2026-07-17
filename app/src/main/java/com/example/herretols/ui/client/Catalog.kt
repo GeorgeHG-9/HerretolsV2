@@ -45,9 +45,17 @@ import androidx.compose.material.icons.automirrored.filled.ListAlt
 import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.ListAlt
 import androidx.compose.material.icons.filled.QrCodeScanner
+import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import com.example.herretols.data.model.Product
 import androidx.compose.foundation.lazy.items as lazyRowItems
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -60,7 +68,9 @@ fun CustomerCatalogScreen(
     onNavigateToHistory: () -> Unit, // ◄ Añadido a los parámetros
     onNavigateToScanner: () -> Unit,
     onNavigateToChat: () -> Unit,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+
+    onNavigateToProductDetail: (Product) -> Unit
 ) {
     val products by catalogViewModel.filteredProducts.collectAsState()
     val searchQuery by catalogViewModel.searchQuery.collectAsState()
@@ -151,6 +161,9 @@ fun CustomerCatalogScreen(
                         items(products) { producto ->
                             ProductCard(
                                 product = producto,
+                                onProductClick = {
+                                    onNavigateToProductDetail(it)
+                                },
                                 onAddToCart = { prod ->
                                     cartViewModel.addProduct(prod)
                                     Toast.makeText(context, "${prod.nombre} añadido", Toast.LENGTH_SHORT).show()
@@ -163,3 +176,4 @@ fun CustomerCatalogScreen(
         }
     }
 }
+

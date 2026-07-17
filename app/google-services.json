@@ -12,7 +12,20 @@
           "package_name": "com.example.herretols"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "684268195349-0464d15hss1903qoao4o457hs27av2oo.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.herretols",
+            "certificate_hash": "9a8955419facea1af14d37c9de7ed12424d13d4b"
+          }
+        },
+        {
+          "client_id": "684268195349-uobbpqk0id6a656s6f3fljtvdjf037co.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyA0XNXM-zQfFa3WeQoJLaK2HiD_ok5-Wao"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "684268195349-uobbpqk0id6a656s6f3fljtvdjf037co.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

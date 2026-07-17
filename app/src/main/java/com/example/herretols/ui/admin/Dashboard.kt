@@ -210,6 +210,7 @@ fun AdminDashboardScreen(
                                     Box(modifier = Modifier.padding(4.dp)) {
                                         ProductCard(
                                             product = producto,
+                                            onProductClick = {},
                                             onAddToCart = { onNavigateToForm(producto) } // Redefinimos la acción del botón para "Editar"
                                         )
                                     }
@@ -362,10 +363,10 @@ fun OrderCard(order: Order, onUpdateStatus: (String) -> Unit) {
                         }
                     }
                     "Entregado" -> {
-                        Text("✔ Entregado", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                        Text(" Entregado", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                     }
                     "Cancelado" -> {
-                        Text("❌ Cancelado por Cliente", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
+                        Text(" Cancelado por Cliente", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
                     }
                 }
             }

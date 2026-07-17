@@ -26,6 +26,7 @@ import com.example.herretols.data.model.Product
 import com.example.herretols.ui.admin.AdminDashboardScreen
 import com.example.herretols.ui.admin.AdminViewModel
 import com.example.herretols.ui.admin.ProductFormScreen
+import com.example.herretols.ui.auth.CompleteProfileScreen
 import com.example.herretols.ui.auth.SplashScreen
 import com.example.herretols.ui.catalog.CartScreen
 import com.example.herretols.ui.catalog.CartViewModel
@@ -37,10 +38,13 @@ import com.example.herretols.ui.chat.ChatAssistantScreen
 import com.example.herretols.ui.chat.ChatAssistantViewModel
 import com.example.herretols.ui.scanner.BarcodeScannerScreen
 
+import com.example.herretols.ui.client.ProductDetailContent
+
 // 1. Definición de las rutas del sistema
 sealed class Screen(val route: String) {
     object Splash : Screen("splash") // ◄ Nueva pantalla inicial
     object Login : Screen("login")
+    object CompleteProfile : Screen("complete_profile") // ◄ Nueva pantalla
     object Register : Screen("register")
     object AdminDashboard : Screen("admin_dashboard")
     object CustomerCatalog : Screen("customer_catalog")
@@ -49,6 +53,8 @@ sealed class Screen(val route: String) {
     object CustomerOrders : Screen("customer_orders")
     object Scanner : Screen("scanner")
     object ChatAssistant : Screen("chat_assistant")
+
+    object ProductDetail : Screen("product_detail")
 }
 
 @Composable
@@ -65,6 +71,11 @@ fun AppNavigation() {
 
     // Estado temporal para pasar el producto a editar entre pantallas sin romper la arquitectura
     var selectedProductToEdit by remember { mutableStateOf<Product?>(null) }
+
+    var selectedProductDetail by remember {
+        mutableStateOf<Product?>(null)
+    }
+
     NavHost(
         navController = navController,
         startDestination = Screen.Splash.route // ◄ Arranca aquí ahora
@@ -91,6 +102,9 @@ fun AppNavigation() {
             LoginScreen(
                 viewModel = authViewModel,
                 onNavigateToRegister = { navController.navigate(Screen.Register.route) },
+                onNavigateToCompleteProfile = {
+                    navController.navigate(Screen.CompleteProfile.route)
+                },
                 onLoginSuccess = { rol ->
                     val destino = if (rol == "admin") Screen.AdminDashboard.route else Screen.CustomerCatalog.route
                     navController.navigate(destino) {
@@ -116,6 +130,12 @@ fun AppNavigation() {
                 onNavigateToHistory = { navController.navigate(Screen.CustomerOrders.route) },
                 onNavigateToScanner = { navController.navigate(Screen.Scanner.route) },
                 onNavigateToChat = { navController.navigate(Screen.ChatAssistant.route) },
+                onNavigateToProductDetail = { product ->
+                    selectedProductDetail = product
+                    navController.navigate(
+                        Screen.ProductDetail.route
+                    )
+                },
                 onLogout = {
                     navController.navigate(Screen.Login.route) {
                         popUpTo(Screen.CustomerCatalog.route) { inclusive = true }
@@ -185,6 +205,29 @@ fun AppNavigation() {
                 catalogViewModel = catalogViewModel,
                 onNavigateBack = { navController.popBackStack() }
             )
+        }
+
+        // Pantalla intermedia de Google
+        composable(Screen.CompleteProfile.route) {
+            CompleteProfileScreen(
+                viewModel = authViewModel,
+                onCompleteSuccess = {
+                    navController.navigate(Screen.CustomerCatalog.route) {
+                        popUpTo(Screen.Login.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        composable(Screen.ProductDetail.route) {
+            selectedProductDetail?.let { product ->
+                ProductDetailContent(
+                    product = product,
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    }
+                )
+            }
         }
     }
 }

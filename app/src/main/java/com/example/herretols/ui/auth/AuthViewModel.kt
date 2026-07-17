@@ -6,6 +6,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.example.herretols.data.model.AuthState
 import com.example.herretols.data.model.UserProfile
+import com.google.firebase.auth.GoogleAuthProvider
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -18,6 +19,54 @@ class AuthViewModel : ViewModel() {
 
     private val _authState = MutableStateFlow<AuthState>(AuthState.Idle)
     val authState: StateFlow<AuthState> = _authState
+
+    fun loginWithGoogle(idToken: String) {
+        viewModelScope.launch {
+            _authState.value = AuthState.Loading
+            try {
+                val credential = GoogleAuthProvider.getCredential(idToken, null)
+                val authResult = auth.signInWithCredential(credential).await()
+                val user = authResult.user ?: throw Exception("Error con Google")
+
+                // Verificar si ya existe en Firestore
+                val document = db.collection("usuarios").document(user.uid).get().await()
+
+                if (document.exists()) {
+                    val rol = document.getString("rol") ?: "cliente"
+                    _authState.value = AuthState.Success(rol)
+                } else {
+                    // ◄ CAMBIO: Si no existe, NO lo creamos aún. Pasamos al estado NewGoogleUser
+                    _authState.value = AuthState.NewGoogleUser
+                }
+            } catch (e: Exception) {
+                _authState.value = AuthState.Error(e.localizedMessage ?: "Error")
+            }
+        }
+    }
+
+    // NUEVA FUNCIÓN: Para guardar los datos cuando termine de rellenar el formulario
+    fun completeGoogleUserProfile(telefono: String, direccion: String) {
+        viewModelScope.launch {
+            _authState.value = AuthState.Loading
+            try {
+                val user = auth.currentUser ?: throw Exception("No hay sesión activa")
+
+                val nuevoPerfil = UserProfile(
+                    uid = user.uid,
+                    nombre = user.displayName ?: "Usuario Google",
+                    email = user.email ?: "",
+                    telefono = telefono,
+                    direccion = direccion,
+                    rol = "cliente"
+                )
+
+                db.collection("usuarios").document(user.uid).set(nuevoPerfil.toMap()).await()
+                _authState.value = AuthState.Success("cliente")
+            } catch (e: Exception) {
+                _authState.value = AuthState.Error(e.localizedMessage ?: "Error al guardar perfil")
+            }
+        }
+    }
 
     // 1. REGISTRO CON EMAIL, PASSWORD Y DATOS ADICIONALES
     fun registerWithEmail(userProfile: UserProfile, password: String) {

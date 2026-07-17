@@ -1,5 +1,8 @@
 package com.example.herretols.ui.admin
 
+import android.R.attr.content
+import android.R.id.content
+import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.firestore.FirebaseFirestore
@@ -7,10 +10,17 @@ import com.google.firebase.firestore.Query
 import com.example.herretols.data.model.Order
 import com.example.herretols.data.model.OrderProduct
 import com.example.herretols.data.model.Product
+import com.example.herretols.ui.chat.Secrets
+
+import com.google.ai.client.generativeai.GenerativeModel
+import com.google.ai.client.generativeai.type.content
+import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import java.io.ByteArrayOutputStream
+import java.util.UUID
 
 class AdminViewModel : ViewModel() {
 
@@ -26,6 +36,12 @@ class AdminViewModel : ViewModel() {
     val totalPedidos = MutableStateFlow(0)
     val pedidosPendientes = MutableStateFlow(0)
     val valorTotalStock = MutableStateFlow(0.0)
+
+    //Para imagen IA
+    val isAnalyzingImage = MutableStateFlow(false)
+    val generatedIaDescription = MutableStateFlow("")
+
+    val apiKey = Secrets.GEMINI_API_KEY
 
     init {
         fetchOrders() // Escucha los pedidos desde que abre el panel
@@ -61,6 +77,39 @@ class AdminViewModel : ViewModel() {
                 .take(5)
 
             _topProducts.value = top5
+        }
+    }
+
+
+    fun generarDescripcionPorIA(bitmap: Bitmap) {
+        isAnalyzingImage.value = true
+        viewModelScope.launch {
+            try {
+                // Usamos el mismo modelo Gemini 2.5 Flash
+                val generativeModel = GenerativeModel(
+                    modelName = "gemini-2.5-flash",
+                    apiKey = apiKey
+                )
+
+                // Empaquetamos la imagen física y el texto de instrucción (Prompt de Visión)
+                val inputContent = content {
+                    image(bitmap)
+                    text("""
+                    Analiza detenidamente la fotografía de este producto de ferretería. 
+                    Genera una descripción técnica, comercial y profesional de máximo 2 líneas. 
+                    Identifica qué tipo de herramienta u objeto es, resalta sus características visuales más importantes (como material, color, posibles usos o resistencia) y redacta en español de forma atractiva para un catálogo de ventas.
+                """.trimIndent())
+                }
+
+                // Solicitamos la respuesta multimodal
+                val response = generativeModel.generateContent(inputContent)
+                generatedIaDescription.value = response.text ?: "No se logró procesar la imagen."
+
+            } catch (e: Exception) {
+                generatedIaDescription.value = "Error al analizar con IA: ${e.localizedMessage}"
+            } finally {
+                isAnalyzingImage.value = false
+            }
         }
     }
 

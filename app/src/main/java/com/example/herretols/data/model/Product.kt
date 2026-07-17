@@ -8,7 +8,9 @@ data class Product(
     val stock: Int = 0,
     val imagenUrl: String = "",
     val categoria: String = "",
-    val codigoBarras: String = ""
+    val codigoBarras: String = "",
+    val descripcionIA: String = ""
+
 ) {
     // Convierte el documento de Firestore directamente a nuestro objeto Kotlin
     fun toMap(): Map<String, Any> = mapOf(
@@ -19,6 +21,7 @@ data class Product(
         "stock" to stock,
         "imagenUrl" to imagenUrl,
         "categoria" to categoria,
-        "codigoBarras" to codigoBarras
+        "descripcionIA" to descripcionIA,
+        "codigoBarras" to codigoBarras,
     )
 }

@@ -1,5 +1,6 @@
 package com.example.herretols.ui.catalog
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -15,6 +16,7 @@ import com.example.herretols.data.model.Product
 @Composable
 fun ProductCard(
     product: Product,
+    onProductClick: (Product) -> Unit,
     onAddToCart: (Product) -> Unit
 ) {
     Card(
@@ -30,7 +32,10 @@ fun ProductCard(
                 contentDescription = product.nombre,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(140.dp),
+                    .height(140.dp)
+                    .clickable {
+                        onProductClick(product)
+                    },
                 contentScale = ContentScale.Crop
             )
 

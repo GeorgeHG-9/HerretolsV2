@@ -68,6 +68,9 @@ dependencies {
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.compose.foundation)
+    implementation(libs.androidx.foundation)
+    implementation(libs.androidx.compose.runtime)
+    implementation(libs.engage.core)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -90,4 +93,12 @@ dependencies {
 
     // --- SDK OFICIAL DE GOOGLE GEMINI PARA ANDROID ---
     implementation("com.google.ai.client.generativeai:generativeai:0.7.0")
+
+    // --- TEMA ---
+    implementation("androidx.activity:activity-compose:1.10.0")
+    implementation("androidx.compose.ui:ui-text-google-fonts:1.10.0")
+    implementation("androidx.compose.material:material-icons-extended-android:1.7.8")
+
+    //---IA IMAGEN
+    implementation("com.google.firebase:firebase-storage-ktx")
 }

@@ -14,18 +14,28 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.herretols.ui.navigation.AppNavigation
-import com.example.herretols.ui.theme.HerretolsTheme
+import com.example.herretols.ui.theme.AppTheme
+//import com.example.herretols.ui.theme.HerretolsTheme
 
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MaterialTheme {
-                Surface(color = MaterialTheme.colorScheme.background) {
+            AppTheme(dynamicColor = false){
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ){
                     AppNavigation()
                 }
             }
+//            MaterialTheme {
+//                Surface(color = MaterialTheme.colorScheme.background) {
+//                    AppNavigation()
+//                }
+//            }
         }
     }
 }
+

@@ -1,12 +1,17 @@
 package com.example.herretols.ui.admin
 
+import android.Manifest
+import android.graphics.Bitmap
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -33,6 +38,47 @@ fun ProductFormScreen(
     var imagenUrl by remember { mutableStateOf(productToEdit?.imagenUrl ?: "") }
     var categoria by remember { mutableStateOf(productToEdit?.categoria ?: "Herramientas") }
     var codigoBarras by remember { mutableStateOf(productToEdit?.codigoBarras ?: "") }
+
+    //IMAGEN IA
+    var descripcionIA by remember { mutableStateOf("") }
+    val isAnalyzing by adminViewModel.isAnalyzingImage.collectAsState()
+    val iaResult by adminViewModel.generatedIaDescription.collectAsState()
+
+    // Escuchamos cuando la IA termine de escribir para actualizar la caja de texto local
+    LaunchedEffect(iaResult) {
+        if (iaResult.isNotBlank()) {
+            descripcionIA = iaResult
+        }
+    }
+
+
+    // Lanzador nativo para capturar la foto como un objeto Bitmap
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicturePreview()
+    ) { bitmap: Bitmap? ->
+        if (bitmap != null) {
+            // Pasamos el Bitmap directo a Gemini
+            adminViewModel.generarDescripcionPorIA(bitmap)
+        }
+    }
+
+    // Lanzador para pedir permiso de cámara
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+
+        if (granted) {
+            cameraLauncher.launch(null)
+        } else {
+            Toast.makeText(
+                context,
+                "Se requiere permiso de cámara",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
+
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -57,6 +103,38 @@ fun ProductFormScreen(
             OutlinedTextField(value = nombre, onValueChange = { nombre = it }, label = { Text("Nombre del Producto") }, modifier = Modifier.fillMaxWidth())
 
             OutlinedTextField(value = descripcion, onValueChange = { descripcion = it }, label = { Text("Descripción") }, modifier = Modifier.fillMaxWidth(), maxLines = 3)
+
+            // BOTÓN PARA TOMAR LA FOTO CON LA CÁMARA
+            Button(
+                onClick = {
+                    permissionLauncher.launch(
+                        Manifest.permission.CAMERA
+                    )
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+            ) {
+                Icon(Icons.Default.CameraAlt, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Tomar Foto para Descripción IA")
+            }
+
+            if (isAnalyzing) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    CircularProgressIndicator(modifier = Modifier.size(20.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Gemini está examinando el producto...", style = MaterialTheme.typography.bodySmall)
+                }
+            }
+
+            // CAMPO DE TEXTO DE LA DESCRIPCIÓN GENERADA POR IA
+            OutlinedTextField(
+                value = descripcionIA,
+                onValueChange = { descripcionIA = it },
+                label = { Text("Descripción Técnica (Autogenerada por IA)") },
+                modifier = Modifier.fillMaxWidth().height(120.dp),
+                maxLines = 4
+            )
 
             OutlinedTextField(
                 value = precio,
@@ -96,7 +174,8 @@ fun ProductFormScreen(
                             precio = precioDouble,
                             stock = stockInt,
                             imagenUrl = imagenUrl,
-                            categoria = categoria
+                            categoria = categoria,
+                            descripcionIA = descripcionIA, // Viene del análisis de Gemini
                         )
 
                         adminViewModel.saveProduct(

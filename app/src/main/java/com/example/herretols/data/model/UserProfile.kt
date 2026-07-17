@@ -25,4 +25,5 @@ sealed interface AuthState {
     data class Error(val message: String) : AuthState
     object EmailVerificationSent : AuthState
     object ResetPasswordEmailSent : AuthState
+    object NewGoogleUser : AuthState // Avisa que es un usuario de Google sin datos
 }
