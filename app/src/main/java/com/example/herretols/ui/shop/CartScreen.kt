@@ -1,4 +1,4 @@
-package com.example.herretols.ui.catalog
+package com.example.herretols.ui.shop
 
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.herretols.ui.shop.CartViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

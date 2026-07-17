@@ -10,7 +10,7 @@ import com.google.firebase.firestore.Query
 import com.example.herretols.data.model.Order
 import com.example.herretols.data.model.OrderProduct
 import com.example.herretols.data.model.Product
-import com.example.herretols.ui.chat.Secrets
+import com.example.herretols.config.Secrets
 
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.content

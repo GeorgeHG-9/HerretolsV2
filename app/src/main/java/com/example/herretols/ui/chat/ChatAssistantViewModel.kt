@@ -6,7 +6,7 @@ import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.content
 import com.example.herretols.data.model.ChatMessage
 import com.example.herretols.data.model.Product
-import com.example.herretols.ui.chat.Secrets.GEMINI_API_KEY
+import com.example.herretols.config.Secrets.GEMINI_API_KEY
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch

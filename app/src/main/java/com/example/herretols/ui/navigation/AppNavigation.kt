@@ -1,11 +1,6 @@
 package com.example.herretols.ui.navigation
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -13,32 +8,27 @@ import androidx.navigation.compose.rememberNavController
 import com.example.herretols.ui.auth.AuthViewModel
 import com.example.herretols.ui.auth.LoginScreen
 import com.example.herretols.ui.auth.RegisterScreen
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
-import androidx.compose.material3.Button
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.unit.dp
 import com.example.herretols.data.model.Product
 import com.example.herretols.ui.admin.AdminDashboardScreen
 import com.example.herretols.ui.admin.AdminViewModel
 import com.example.herretols.ui.admin.ProductFormScreen
 import com.example.herretols.ui.auth.CompleteProfileScreen
 import com.example.herretols.ui.auth.SplashScreen
-import com.example.herretols.ui.catalog.CartScreen
-import com.example.herretols.ui.catalog.CartViewModel
-import com.example.herretols.ui.catalog.CatalogViewModel
-import com.example.herretols.ui.client.CustomerCatalogScreen
-import com.example.herretols.ui.catalog.OrdersHistoryViewModel
-import com.example.herretols.ui.catalog.CustomerOrdersScreen
+import com.example.herretols.ui.shop.CartScreen
+import com.example.herretols.ui.shop.CartViewModel
+import com.example.herretols.ui.shop.CatalogViewModel
+import com.example.herretols.ui.shop.CustomerCatalogScreen
+import com.example.herretols.ui.orders.OrdersHistoryViewModel
+import com.example.herretols.ui.orders.CustomerOrdersScreen
 import com.example.herretols.ui.chat.ChatAssistantScreen
 import com.example.herretols.ui.chat.ChatAssistantViewModel
 import com.example.herretols.ui.scanner.BarcodeScannerScreen
 
-import com.example.herretols.ui.client.ProductDetailContent
+import com.example.herretols.ui.shop.ProductDetailContent
 
 // 1. Definición de las rutas del sistema
 sealed class Screen(val route: String) {

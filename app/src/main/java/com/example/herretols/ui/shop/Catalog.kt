@@ -1,11 +1,8 @@
-package com.example.herretols.ui.client
+package com.example.herretols.ui.shop
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -14,7 +11,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.herretols.ui.auth.AuthViewModel
-import com.example.herretols.ui.catalog.CatalogViewModel
 
 // Importaciones necesarias para actualizar el CustomerCatalogScreen
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -25,7 +21,6 @@ import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.unit.dp
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
@@ -37,24 +32,14 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBar
 import androidx.compose.ui.platform.LocalContext
-import com.example.herretols.ui.catalog.CartViewModel
-import com.example.herretols.ui.catalog.ProductCard
+import com.example.herretols.ui.components.ProductCard
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.material.icons.automirrored.filled.Chat
-import androidx.compose.material.icons.automirrored.filled.ListAlt
 import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.ListAlt
 import androidx.compose.material.icons.filled.QrCodeScanner
-import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import com.example.herretols.data.model.Product
 import androidx.compose.foundation.lazy.items as lazyRowItems
 

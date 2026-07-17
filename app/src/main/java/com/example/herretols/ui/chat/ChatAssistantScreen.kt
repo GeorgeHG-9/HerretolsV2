@@ -17,7 +17,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.herretols.data.model.ChatMessage
-import com.example.herretols.ui.catalog.CatalogViewModel
+import com.example.herretols.ui.shop.CatalogViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

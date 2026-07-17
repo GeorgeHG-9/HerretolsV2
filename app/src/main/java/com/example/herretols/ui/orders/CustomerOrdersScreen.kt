@@ -1,5 +1,6 @@
-package com.example.herretols.ui.catalog
+package com.example.herretols.ui.orders
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -12,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.herretols.data.model.Order
+import com.example.herretols.ui.orders.OrdersHistoryViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -148,7 +150,7 @@ fun CustomerOrderCard(order: Order, onCancelClick: () -> Unit) {
                     OutlinedButton(
                         onClick = onCancelClick,
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.error),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.error),
                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
                     ) {
                         Text("Cancelar Pedido", style = MaterialTheme.typography.bodySmall)

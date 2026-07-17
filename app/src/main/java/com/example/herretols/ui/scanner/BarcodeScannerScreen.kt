@@ -23,8 +23,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import com.example.herretols.data.model.Product
-import com.example.herretols.ui.catalog.CartViewModel
-import com.example.herretols.ui.catalog.CatalogViewModel
+import com.example.herretols.ui.shop.CartViewModel
+import com.example.herretols.ui.shop.CatalogViewModel
 import java.util.concurrent.Executors
 
 @OptIn(ExperimentalMaterial3Api::class)

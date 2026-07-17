@@ -1,4 +1,4 @@
-package com.example.herretols.ui.catalog
+package com.example.herretols.ui.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
