@@ -57,7 +57,7 @@ class ChatAssistantViewModel : ViewModel() {
 
                 // 4. INICIALIZAR EL MODELO CON EL PROMPT DEL SISTEMA
                 val generativeModel = GenerativeModel(
-                    modelName = "gemini-2.5-flash",
+                    modelName = "gemini-3.5-flash",
                     apiKey = apiKey,
                     systemInstruction = content { text(systemInstruction) }
                 )

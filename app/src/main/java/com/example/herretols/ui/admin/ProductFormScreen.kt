@@ -14,6 +14,8 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -38,6 +40,8 @@ fun ProductFormScreen(
     var imagenUrl by remember { mutableStateOf(productToEdit?.imagenUrl ?: "") }
     var categoria by remember { mutableStateOf(productToEdit?.categoria ?: "Herramientas") }
     var codigoBarras by remember { mutableStateOf(productToEdit?.codigoBarras ?: "") }
+    var capturedBitmap by remember { mutableStateOf<Bitmap?>(null) }
+
 
     //IMAGEN IA
     var descripcionIA by remember { mutableStateOf("") }
@@ -57,6 +61,7 @@ fun ProductFormScreen(
         contract = ActivityResultContracts.TakePicturePreview()
     ) { bitmap: Bitmap? ->
         if (bitmap != null) {
+            capturedBitmap = bitmap // <--- Guardamos la referencia
             // Pasamos el Bitmap directo a Gemini
             adminViewModel.generarDescripcionPorIA(bitmap)
         }
@@ -177,6 +182,28 @@ fun ProductFormScreen(
                             categoria = categoria,
                             descripcionIA = descripcionIA, // Viene del análisis de Gemini
                         )
+
+                        // SI HAY UNA FOTO CAPTURADA, SUBIR A CLOUDFLARE
+                        if (capturedBitmap != null) {
+                            adminViewModel.guardarProductoConImagen(
+                                product = producto,
+                                bitmap = capturedBitmap!!,
+                                onSuccess = {
+                                    Toast.makeText(context, "Producto e imagen guardados", Toast.LENGTH_SHORT).show()
+                                    onNavigateBack()
+                                },
+                                onError = { error ->
+                                    Toast.makeText(context, "Error: $error", Toast.LENGTH_SHORT).show()
+                                }
+                            )
+                        } else {
+                            // SI NO HAY FOTO, GUARDAR SOLO TEXTO (comportamiento actual)
+                            adminViewModel.saveProduct(
+                                product = producto,
+                                onSuccess = { onNavigateBack() },
+                                onError = { /*...*/ }
+                            )
+                        }
 
                         adminViewModel.saveProduct(
                             product = producto,
