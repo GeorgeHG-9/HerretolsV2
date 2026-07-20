@@ -57,7 +57,7 @@ class ChatAssistantViewModel : ViewModel() {
 
                 // 4. INICIALIZAR EL MODELO CON EL PROMPT DEL SISTEMA
                 val generativeModel = GenerativeModel(
-                    modelName = "gemini-3.5-flash",
+                    modelName = "gemini-1.5-flash",
                     apiKey = apiKey,
                     systemInstruction = content { text(systemInstruction) }
                 )
@@ -76,10 +76,15 @@ class ChatAssistantViewModel : ViewModel() {
 
                 _messages.value = _messages.value + ChatMessage(text = botText, isUser = false)
             } catch (e: Exception) {
-                _messages.value = _messages.value + ChatMessage(
-                    text = "Error de conexión con la red de IA: ${e.localizedMessage}. Por favor, verifica tu conexión.",
-                    isUser = false
-                )
+                val errorMsg = e.message ?: ""
+                val friendlyMessage = when {
+                    errorMsg.contains("503") || errorMsg.contains("high demand") ->
+                        "El servicio de IA está muy solicitado ahora mismo. Por favor, espera un momento y vuelve a intentarlo."
+                    errorMsg.contains("MissingFieldException") ->
+                        "Hubo un problema procesando la respuesta de la IA. Reintenta en unos segundos."
+                    else -> "Error de conexión con la red de IA: ${e.localizedMessage}. Por favor, verifica tu conexión."
+                }
+                _messages.value = _messages.value + ChatMessage(text = friendlyMessage, isUser = false)
             } finally {
                 _isResponding.value = false
             }

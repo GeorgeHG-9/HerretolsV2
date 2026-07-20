@@ -21,7 +21,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.foundation.Image
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.RoundedCornerShape
 import com.example.herretols.data.model.Product
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -121,7 +127,26 @@ fun ProductFormScreen(
             ) {
                 Icon(Icons.Default.CameraAlt, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Tomar Foto para Descripción IA")
+                Text(if (capturedBitmap == null) "Tomar Foto del Producto" else "Cambiar Foto")
+            }
+
+            // VISTA PREVIA DE LA IMAGEN CAPTURADA
+            capturedBitmap?.let { bitmap ->
+                Card(
+                    modifier = Modifier
+                        .size(150.dp)
+                        .padding(8.dp),
+                    shape = RoundedCornerShape(8.dp),
+                    elevation = CardDefaults.cardElevation(4.dp)
+                ) {
+                    Image(
+                        bitmap = bitmap.asImageBitmap(),
+                        contentDescription = "Vista previa",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+                Text("La imagen se subirá automáticamente", style = MaterialTheme.typography.labelSmall)
             }
 
             if (isAnalyzing) {
@@ -183,45 +208,40 @@ fun ProductFormScreen(
                             descripcionIA = descripcionIA, // Viene del análisis de Gemini
                         )
 
-                        // SI HAY UNA FOTO CAPTURADA, SUBIR A CLOUDFLARE
+                        // LÓGICA DE GUARDADO CORREGIDA
                         if (capturedBitmap != null) {
+                            // SI HAY UNA FOTO: Primero sube a R2 y luego guarda en Firestore
                             adminViewModel.guardarProductoConImagen(
                                 product = producto,
                                 bitmap = capturedBitmap!!,
                                 onSuccess = {
-                                    Toast.makeText(context, "Producto e imagen guardados", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, "Producto e imagen guardados con éxito", Toast.LENGTH_SHORT).show()
+                                    onNavigateBack()
+                                },
+                                onError = { error ->
+                                    Toast.makeText(context, "Error al subir imagen: $error", Toast.LENGTH_SHORT).show()
+                                }
+                            )
+                        } else {
+                            // SI NO HAY FOTO: Guarda solo los datos de texto (incluyendo URL manual si existe)
+                            adminViewModel.saveProduct(
+                                product = producto,
+                                onSuccess = {
+                                    Toast.makeText(context, "Producto guardado", Toast.LENGTH_SHORT).show()
                                     onNavigateBack()
                                 },
                                 onError = { error ->
                                     Toast.makeText(context, "Error: $error", Toast.LENGTH_SHORT).show()
                                 }
                             )
-                        } else {
-                            // SI NO HAY FOTO, GUARDAR SOLO TEXTO (comportamiento actual)
-                            adminViewModel.saveProduct(
-                                product = producto,
-                                onSuccess = { onNavigateBack() },
-                                onError = { /*...*/ }
-                            )
                         }
-
-                        adminViewModel.saveProduct(
-                            product = producto,
-                            onSuccess = {
-                                Toast.makeText(context, "Producto guardado correctamente", Toast.LENGTH_SHORT).show()
-                                onNavigateBack()
-                            },
-                            onError = { error ->
-                                Toast.makeText(context, "Error: $error", Toast.LENGTH_SHORT).show()
-                            }
-                        )
                     } else {
-                        Toast.makeText(context, "Por favor, llene los campos numéricos correctamente", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Por favor, llene los campos obligatorios", Toast.LENGTH_SHORT).show()
                     }
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Guardar Producto")
+                Text(if (capturedBitmap != null) "Subir Foto y Guardar" else "Guardar Producto")
             }
 
             // Si estamos editando, mostrar un botón adicional para eliminar

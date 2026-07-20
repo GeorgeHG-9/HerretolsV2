@@ -94,9 +94,9 @@ class AdminViewModel : ViewModel() {
         isAnalyzingImage.value = true
         viewModelScope.launch {
             try {
-                // Usamos el mismo modelo Gemini 2.5 Flash
+                // Usamos el modelo correcto: gemini-1.5-flash
                 val generativeModel = GenerativeModel(
-                    modelName = "gemini-3.5-flash",
+                    modelName = "gemini-1.5-flash",
                     apiKey = apiKey
                 )
 
@@ -115,7 +115,14 @@ class AdminViewModel : ViewModel() {
                 generatedIaDescription.value = response.text ?: "No se logró procesar la imagen."
 
             } catch (e: Exception) {
-                generatedIaDescription.value = "Error al analizar con IA: ${e.localizedMessage}"
+                val errorMsg = e.message ?: ""
+                generatedIaDescription.value = when {
+                    errorMsg.contains("503") || errorMsg.contains("high demand") -> 
+                        "El servicio de IA está saturado temporalmente. Reintenta en unos segundos."
+                    errorMsg.contains("MissingFieldException") ->
+                        "Error al procesar la respuesta de la IA (Saturación). Reintenta."
+                    else -> "Error al analizar con IA: ${e.localizedMessage}"
+                }
             } finally {
                 isAnalyzingImage.value = false
             }
@@ -208,27 +215,29 @@ class AdminViewModel : ViewModel() {
         }
     }
 
-    fun uploadProductImage(bitmap: Bitmap, onSuccess: (String) -> Unit) {
+    fun uploadProductImage(bitmap: Bitmap, onSuccess: (String) -> Unit, onError: (String) -> Unit) {
         viewModelScope.launch {
             try {
                 val user = FirebaseAuth.getInstance().currentUser
-                val token = user?.getIdToken(false)?.await()?.token ?: return@launch
+                val token = user?.getIdToken(false)?.await()?.token ?: run {
+                    onError("Sesión expirada")
+                    return@launch
+                }
 
                 val baos = ByteArrayOutputStream()
                 bitmap.compress(Bitmap.CompressFormat.JPEG, 80, baos)
                 val requestBody = baos.toByteArray().toRequestBody("image/jpeg".toMediaType())
                 val fileName = "products/${UUID.randomUUID()}.jpg"
 
-                // --- LLAMADA ÚNICA AL WORKER ---
                 val response = r2Service.uploadImage("Bearer $token", fileName, requestBody)
 
                 if (response.isSuccessful) {
-                    response.body()?.publicUrl?.let { onSuccess(it) }
+                    response.body()?.publicUrl?.let { onSuccess(it) } ?: onError("Error en respuesta")
                 } else {
-                    Log.e("R2_UPLOAD", "Error Worker: ${response.code()}")
+                    onError("Error del Worker: ${response.code()}")
                 }
             } catch (e: Exception) {
-                Log.e("R2_UPLOAD", "Error Red: ${e.message}")
+                onError("Error de red: ${e.message}")
             }
         }
     }
@@ -239,13 +248,13 @@ class AdminViewModel : ViewModel() {
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
-        // 1. Sube la imagen al Worker
-        uploadProductImage(bitmap) { urlFinal ->
-            // 2. Actualiza el producto con la URL recibida de Cloudflare
-            val productoActualizado = product.copy(imagenUrl = urlFinal)
-
-            // 3. Guarda el producto final en Firestore
-            saveProduct(productoActualizado, onSuccess, onError)
-        }
+        uploadProductImage(
+            bitmap = bitmap,
+            onSuccess = { urlFinal ->
+                val productoActualizado = product.copy(imagenUrl = urlFinal)
+                saveProduct(productoActualizado, onSuccess, onError)
+            },
+            onError = onError
+        )
     }
 }
