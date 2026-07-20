@@ -1,8 +1,7 @@
 package com.example.herretols.ui.admin
 
-import android.R.attr.content
-import android.R.id.content
 import android.graphics.Bitmap
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.firestore.FirebaseFirestore
@@ -11,14 +10,19 @@ import com.example.herretols.data.model.Order
 import com.example.herretols.data.model.OrderProduct
 import com.example.herretols.data.model.Product
 import com.example.herretols.config.Secrets
+import com.example.herretols.data.bridge.CloudflareR2Service
 
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.content
-import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.toRequestBody
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 import java.io.ByteArrayOutputStream
 import java.util.UUID
 
@@ -37,11 +41,18 @@ class AdminViewModel : ViewModel() {
     val pedidosPendientes = MutableStateFlow(0)
     val valorTotalStock = MutableStateFlow(0.0)
 
-    //Para imagen IA
+    // Para imagen IA
     val isAnalyzingImage = MutableStateFlow(false)
     val generatedIaDescription = MutableStateFlow("")
 
     val apiKey = Secrets.GEMINI_API_KEY
+
+    // --- CAMBIO: Ahora apunta a tu Cloudflare Worker ---
+    private val r2Service = Retrofit.Builder()
+        .baseUrl("https://herretols-r2-worker.hectorda28yo.workers.dev/")
+        .addConverterFactory(GsonConverterFactory.create())
+        .build()
+        .create(CloudflareR2Service::class.java)
 
     init {
         fetchOrders() // Escucha los pedidos desde que abre el panel
@@ -63,10 +74,8 @@ class AdminViewModel : ViewModel() {
             valorTotalStock.value = productos.sumOf { it.precio * it.stock }
 
             // 2. Calcular Top 5 Productos más vendidos
-            // Convertimos todos los productos de todas las órdenes en una sola lista plana
             val todosLosProductosVendidos = pedidosActivos.flatMap { it.productos }
 
-            // Agrupamos por nombre de producto y sumamos sus cantidades
             val conteoPorProducto = todosLosProductosVendidos
                 .groupBy { it.nombre }
                 .mapValues { entry -> entry.value.sumOf { it.cantidad } }
@@ -85,9 +94,9 @@ class AdminViewModel : ViewModel() {
         isAnalyzingImage.value = true
         viewModelScope.launch {
             try {
-                // Usamos el mismo modelo Gemini 2.5 Flash
+                // Usamos el modelo correcto: gemini-1.5-flash
                 val generativeModel = GenerativeModel(
-                    modelName = "gemini-2.5-flash",
+                    modelName = "gemini-1.5-flash",
                     apiKey = apiKey
                 )
 
@@ -106,7 +115,14 @@ class AdminViewModel : ViewModel() {
                 generatedIaDescription.value = response.text ?: "No se logró procesar la imagen."
 
             } catch (e: Exception) {
-                generatedIaDescription.value = "Error al analizar con IA: ${e.localizedMessage}"
+                val errorMsg = e.message ?: ""
+                generatedIaDescription.value = when {
+                    errorMsg.contains("503") || errorMsg.contains("high demand") -> 
+                        "El servicio de IA está saturado temporalmente. Reintenta en unos segundos."
+                    errorMsg.contains("MissingFieldException") ->
+                        "Error al procesar la respuesta de la IA (Saturación). Reintenta."
+                    else -> "Error al analizar con IA: ${e.localizedMessage}"
+                }
             } finally {
                 isAnalyzingImage.value = false
             }
@@ -197,5 +213,48 @@ class AdminViewModel : ViewModel() {
                 onError(e.localizedMessage ?: "Error al eliminar el producto")
             }
         }
+    }
+
+    fun uploadProductImage(bitmap: Bitmap, onSuccess: (String) -> Unit, onError: (String) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val user = FirebaseAuth.getInstance().currentUser
+                val token = user?.getIdToken(false)?.await()?.token ?: run {
+                    onError("Sesión expirada")
+                    return@launch
+                }
+
+                val baos = ByteArrayOutputStream()
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 80, baos)
+                val requestBody = baos.toByteArray().toRequestBody("image/jpeg".toMediaType())
+                val fileName = "products/${UUID.randomUUID()}.jpg"
+
+                val response = r2Service.uploadImage("Bearer $token", fileName, requestBody)
+
+                if (response.isSuccessful) {
+                    response.body()?.publicUrl?.let { onSuccess(it) } ?: onError("Error en respuesta")
+                } else {
+                    onError("Error del Worker: ${response.code()}")
+                }
+            } catch (e: Exception) {
+                onError("Error de red: ${e.message}")
+            }
+        }
+    }
+
+    fun guardarProductoConImagen(
+        product: Product,
+        bitmap: Bitmap,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        uploadProductImage(
+            bitmap = bitmap,
+            onSuccess = { urlFinal ->
+                val productoActualizado = product.copy(imagenUrl = urlFinal)
+                saveProduct(productoActualizado, onSuccess, onError)
+            },
+            onError = onError
+        )
     }
 }
