@@ -71,6 +71,7 @@ dependencies {
     implementation(libs.androidx.foundation)
     implementation(libs.androidx.compose.runtime)
     implementation(libs.engage.core)
+    implementation(libs.firebase.crashlytics.buildtools)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

@@ -2,8 +2,10 @@ package com.example.herretols.ui.admin
 
 import android.graphics.Bitmap
 import android.util.Log
+import android.util.Base64
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+// import androidx.privacysandbox.tools.core.generator.build
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.example.herretols.data.model.Order
@@ -11,6 +13,8 @@ import com.example.herretols.data.model.OrderProduct
 import com.example.herretols.data.model.Product
 import com.example.herretols.config.Secrets
 import com.example.herretols.data.bridge.CloudflareR2Service
+import com.example.herretols.data.bridge.OllamaService
+import com.example.herretols.data.dto.OllamaRequest
 
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.content
@@ -20,11 +24,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
 import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.io.ByteArrayOutputStream
 import java.util.UUID
+import java.util.concurrent.TimeUnit
 
 class AdminViewModel : ViewModel() {
 
@@ -36,7 +42,7 @@ class AdminViewModel : ViewModel() {
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
-    // Estados para los KPIs
+    // Estados para los KPI
     val totalPedidos = MutableStateFlow(0)
     val pedidosPendientes = MutableStateFlow(0)
     val valorTotalStock = MutableStateFlow(0.0)
@@ -53,6 +59,21 @@ class AdminViewModel : ViewModel() {
         .addConverterFactory(GsonConverterFactory.create())
         .build()
         .create(CloudflareR2Service::class.java)
+
+    // Crear un cliente de OkHttp con tiempos de espera largos
+    private val clientConTimeout = OkHttpClient.Builder()
+        .connectTimeout(60, TimeUnit.SECONDS) // Tiempo para conectar al servidor
+        .readTimeout(120, TimeUnit.SECONDS)    // Tiempo para esperar la respuesta de la IA
+        .writeTimeout(60, TimeUnit.SECONDS)   // Tiempo para enviar la imagen
+        .build()
+
+    // Añadir el servicio de Ollama en AdminViewModel
+    private val ollamaService = Retrofit.Builder()
+        .baseUrl("http://100.81.168.47:11434/") // Ejemplo: http://100.64.0.5:11434/
+        .client(clientConTimeout)
+        .addConverterFactory(GsonConverterFactory.create())
+        .build()
+        .create(OllamaService::class.java)
 
     init {
         fetchOrders() // Escucha los pedidos desde que abre el panel
@@ -94,35 +115,33 @@ class AdminViewModel : ViewModel() {
         isAnalyzingImage.value = true
         viewModelScope.launch {
             try {
-                // Usamos el modelo correcto: gemini-1.5-flash
-                val generativeModel = GenerativeModel(
-                    modelName = "gemini-1.5-flash",
-                    apiKey = apiKey
+                // Convertir Bitmap a Base64 para Ollama (requiere modelo 'llava')
+                val baos = ByteArrayOutputStream()
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 80, baos)
+
+                // USAR android.util.Base64
+                val base64Image = Base64.encodeToString(baos.toByteArray(), Base64.NO_WRAP)
+
+                val prompt = "Identifica detalladamente la herramienta de ferretería en la imagen y " +
+                        "redacta una descripción técnica profesional en un solo párrafo de máximo 3 líneas " +
+                        "en español que integre de forma fluida el nombre exacto del producto, " +
+                        "la marca si es visible en el objeto, sus materiales de fabricación " +
+                        "como acero cromo vanadio y su aplicación o ventaja técnica principal, " +
+                        "sin utilizar subtítulos, etiquetas ni viñetas, asegurándote de observar " +
+                        "bien la forma para identificar correctamente el objeto y evitar confusiones " +
+                        "con otros artículos."
+
+                val request = OllamaRequest(
+                    model = "llava", // Usa llava para visión, gemma para texto puro
+                    prompt = prompt,
+                    images = listOf(base64Image)
                 )
 
-                // Empaquetamos la imagen física y el texto de instrucción (Prompt de Visión)
-                val inputContent = content {
-                    image(bitmap)
-                    text("""
-                    Analiza detenidamente la fotografía de este producto de ferretería. 
-                    Genera una descripción técnica, comercial y profesional de máximo 2 líneas. 
-                    Identifica qué tipo de herramienta u objeto es, resalta sus características visuales más importantes (como material, color, posibles usos o resistencia) y redacta en español de forma atractiva para un catálogo de ventas.
-                """.trimIndent())
-                }
-
-                // Solicitamos la respuesta multimodal
-                val response = generativeModel.generateContent(inputContent)
-                generatedIaDescription.value = response.text ?: "No se logró procesar la imagen."
+                val response = ollamaService.generate(request)
+                generatedIaDescription.value = response.response
 
             } catch (e: Exception) {
-                val errorMsg = e.message ?: ""
-                generatedIaDescription.value = when {
-                    errorMsg.contains("503") || errorMsg.contains("high demand") -> 
-                        "El servicio de IA está saturado temporalmente. Reintenta en unos segundos."
-                    errorMsg.contains("MissingFieldException") ->
-                        "Error al procesar la respuesta de la IA (Saturación). Reintenta."
-                    else -> "Error al analizar con IA: ${e.localizedMessage}"
-                }
+                generatedIaDescription.value = "Error local (Ollama): ${e.localizedMessage}"
             } finally {
                 isAnalyzingImage.value = false
             }
@@ -168,7 +187,7 @@ class AdminViewModel : ViewModel() {
             }
     }
 
-    // Función para cambiar el estado del pedido (Ej: de Pendiente a Entregado)
+    // Función para cambiar el estado del pedido (Ej.: de Pendiente a Entregado)
     fun updateOrderStatus(orderId: String, nuevoEstado: String) {
         viewModelScope.launch {
             try {
